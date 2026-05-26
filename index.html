@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Variabile Aleatoare — Quiz & Aplicații</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #16100c;
+  --bg2:      #1c1410;
+  --surface:  #241a14;
+  --surface2: #2e211a;
+  --surface3: #392820;
+  --border:   rgba(230,215,195,0.09);
+  --border2:  rgba(230,215,195,0.16);
+  --brown:    #4a2e1e;
+  --brown2:   #5e3a26;
+  --brown3:   #7a4e34;
+  --cream:    #ede3d2;
+  --cream2:   #ddd0ba;
+  --cream3:   #c4b49a;
+  --muted:    #7a6550;
+  --correct:  #1e5c38;
+  --correctL: #2e8a55;
+  --wrong:    #5a1e14;
+  --wrongL:   #8a3020;
+  --serif:    'Playfair Display', Georgia, serif;
+  --body:     'Crimson Pro', Georgia, serif;
+  --mono:     'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: var(--body);
+  font-size: 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* subtle dot texture */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image: radial-gradient(circle, rgba(230,215,195,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky; top:0; z-index:100;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border2);
+  display: flex; align-items: stretch;
+  padding: 0 20px;
+}
+
+.tab-btn {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none; border: none;
+  padding: 17px 22px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--cream2); }
+.tab-btn.active { color: var(--cream); border-bottom-color: var(--brown3); }
+
+/* ── PAGE LAYOUT ── */
+.tab-pane { display:none; position:relative; z-index:1; }
+.tab-pane.active { display:block; animation: fadeUp 0.3s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════ QUIZ ═══════════ */
+.quiz-wrap {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 36px 16px 80px;
+}
+
+.quiz-header { margin-bottom:28px; text-align:center; }
+.quiz-header h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem,6vw,3rem);
+  font-weight: 900;
+  color: var(--cream);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.quiz-header h1 em { color:var(--cream3); font-style:italic; }
+.quiz-header p { font-size: 0.95rem; color: var(--muted); font-style:italic; }
+.qdivider {
+  width:40px; height:1px; margin:12px auto;
+  background: linear-gradient(90deg, transparent, var(--brown3), transparent);
+}
+
+/* progress */
+.prog-track { height:2px; background:var(--surface3); border-radius:99px; overflow:hidden; margin-bottom:5px; }
+.prog-fill { height:100%; background: var(--cream3); border-radius:99px; transition:width .5s ease; }
+.prog-lbl { font-family:var(--mono); font-size:0.64rem; color:var(--muted); text-align:right; margin-bottom:20px; }
+
+/* question card */
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 18px 18px;
+  margin-bottom: 12px;
+  animation: fadeUp 0.35s ease both;
+  position:relative; overflow:hidden;
+}
+.q-card::before {
+  content:'';
+  position:absolute; top:0;left:0;right:0;height:1px;
+  background: linear-gradient(90deg, transparent, var(--brown3), transparent);
+}
+.q-cat {
+  font-family:var(--mono); font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase;
+  color: var(--brown3); margin-bottom:5px;
+}
+.q-num { font-family:var(--mono); font-size:0.6rem; color:var(--muted); letter-spacing:0.08em; margin-bottom:6px; }
+.q-text { font-family:var(--serif); font-size:1.06rem; font-weight:700; color:var(--cream); line-height:1.5; margin-bottom:8px; }
+.q-hint { font-style:italic; font-size:0.88rem; color:var(--muted); margin-bottom:12px; font-family:var(--body); }
+
+/* math formula */
+.q-formula {
+  background: rgba(0,0,0,0.25);
+  border-left: 2px solid var(--brown3);
+  border-radius: 0 7px 7px 0;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.frac {
+  display:inline-flex; flex-direction:column; align-items:center;
+  vertical-align:middle; font-family:var(--mono); font-size:0.83rem; line-height:1.1;
+  color:var(--cream2); margin:0 3px;
+}
+.frac .num { border-bottom:1.5px solid var(--cream3); padding:0 5px 2px; }
+.frac .den { padding:2px 5px 0; }
+.math-eq {
+  font-family:var(--mono); font-size:0.83rem; color:var(--cream2);
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px;
+}
+.math-block { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; }
+
+/* options */
+.options { display:grid; gap:7px; }
+.opt-btn {
+  display:flex; align-items:center; gap:10px;
+  background: var(--surface2); border:1px solid var(--border);
+  border-radius:7px; padding:11px 14px;
+  cursor:pointer; color:var(--cream2);
+  font-family:var(--body); font-size:0.96rem; text-align:left;
+  transition:all 0.18s;
+}
+.opt-btn:hover:not(:disabled) { border-color:var(--brown3); background:rgba(122,78,52,0.12); transform:translateX(3px); }
+.opt-letter {
+  font-family:var(--mono); font-size:0.68rem; color:var(--cream3);
+  background:rgba(230,215,195,0.07); border:1px solid rgba(230,215,195,0.14);
+  border-radius:4px; min-width:24px; height:24px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:all 0.18s;
+}
+.opt-btn.correct { background:rgba(30,92,56,0.22); border-color:var(--correctL); color:#a7f3c0; }
+.opt-btn.correct .opt-letter { background:var(--correct); border-color:var(--correctL); color:#fff; }
+.opt-btn.wrong { background:rgba(90,30,20,0.3); border-color:var(--wrongL); color:#fbb; }
+.opt-btn.wrong .opt-letter { background:var(--wrong); border-color:var(--wrongL); color:#fff; }
+.opt-btn.dead { opacity:0.32; cursor:not-allowed; }
+
+.fb {
+  margin-top:10px; padding:9px 13px; border-radius:6px;
+  font-size:0.87rem; display:none; animation:fadeUp 0.25s ease both;
+  font-family:var(--body);
+}
+.fb.show{display:block}
+.fb.ok{background:rgba(30,92,56,0.2);border:1px solid var(--correctL);color:#a7f3c0;}
+.fb.bad{background:rgba(90,30,20,0.2);border:1px solid var(--wrongL);color:#fbb;}
+.fb strong{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;}
+
+/* score */
+.score-panel { display:none; text-align:center; padding:56px 20px; animation:fadeUp 0.4s ease both; }
+.score-big { font-family:var(--serif); font-size:5rem; font-weight:900; color:var(--cream); line-height:1; }
+.score-lbl { font-family:var(--mono); font-size:0.66rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; margin:8px 0 14px; }
+.score-msg { font-size:1.08rem; font-style:italic; color:var(--cream2); margin-bottom:28px; line-height:1.6; max-width:380px; margin-left:auto; margin-right:auto; }
+.restart-btn {
+  font-family:var(--mono); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;
+  background:var(--brown2); color:var(--cream); border:none;
+  padding:12px 28px; border-radius:7px; cursor:pointer; transition:all 0.2s;
+}
+.restart-btn:hover { background:var(--brown3); transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.4); }
+
+/* ═══════════ APPS ═══════════ */
+.apps-wrap {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+.apps-header { margin-bottom:28px; text-align:center; }
+.apps-header h1 {
+  font-family:var(--serif); font-size:clamp(2rem,6vw,3rem); font-weight:900;
+  color:var(--cream); line-height:1.1; margin-bottom:8px;
+}
+.apps-header h1 em { color:var(--cream3); font-style:italic; }
+.apps-header p { font-size:0.95rem; color:var(--muted); font-style:italic; }
+
+.app-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 18px 18px;
+  margin-bottom: 16px;
+  position:relative; overflow:hidden;
+}
+.app-card::before {
+  content:''; position:absolute; top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--brown3),transparent);
+}
+.app-title { font-family:var(--serif); font-size:1.25rem; font-weight:700; color:var(--cream); margin-bottom:3px; }
+.app-sub { font-size:0.87rem; color:var(--muted); font-style:italic; margin-bottom:16px; font-family:var(--body); }
+.app-tag {
+  position:absolute; top:14px; right:14px;
+  font-family:var(--mono); font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase;
+  background:rgba(230,215,195,0.04); border:1px solid var(--border);
+  color:var(--muted); border-radius:4px; padding:2px 7px;
+}
+
+/* shared action button */
+.act-btn {
+  width:100%; padding:11px;
+  background: var(--brown); border:1px solid var(--border2);
+  color:var(--cream); font-family:var(--mono); font-size:0.7rem;
+  letter-spacing:0.08em; text-transform:uppercase;
+  border-radius:7px; cursor:pointer; transition:all 0.18s; margin-top:8px;
+}
+.act-btn:hover:not(:disabled) { background:var(--brown2); }
+.act-btn.ghost { background:var(--surface2); border-color:var(--border); color:var(--cream3); }
+.act-btn.ghost:hover:not(:disabled) { background:var(--surface3); border-color:var(--brown3); color:var(--cream); }
+.act-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+.stat-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.stat-badge {
+  font-family:var(--mono); font-size:0.67rem; color:var(--muted);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:4px; padding:4px 10px;
+}
+.stat-badge span { color:var(--cream2); }
+
+/* inline formula strip */
+.inline-formula {
+  background:rgba(0,0,0,0.22); border-left:2px solid var(--brown3);
+  border-radius:0 6px 6px 0; padding:10px 14px; margin-bottom:12px; text-align:center;
+}
+
+/* ── DICE ── */
+.dice-center { text-align:center; margin-bottom:4px; }
+.dice-face {
+  width:80px; height:80px;
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:14px; margin:0 auto 10px;
+  display:grid; place-items:center;
+  font-size:2.5rem; cursor:pointer;
+  transition:transform 0.15s, border-color 0.2s; user-select:none;
+}
+.dice-face:hover { border-color:var(--brown3); transform:scale(1.06); }
+.dice-face.rolling { animation:rollIt 0.45s ease; }
+@keyframes rollIt {
+  0%  {transform:rotate(0)scale(1)}
+  25% {transform:rotate(18deg)scale(0.87)}
+  60% {transform:rotate(-14deg)scale(1.1)}
+  100%{transform:rotate(0)scale(1)}
+}
+.dice-hist { display:flex; gap:4px; align-items:flex-end; height:52px; margin-top:12px; padding:0 2px; }
+.d-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.d-bar {
+  width:100%; background:rgba(196,180,154,0.15); border:1px solid rgba(196,180,154,0.1);
+  border-radius:2px 2px 0 0; transition:height 0.4s ease; min-height:3px;
+}
+.d-bar.top { background:rgba(196,180,154,0.4); border-color:var(--cream3); }
+.d-bar-lbl { font-family:var(--mono); font-size:0.58rem; color:var(--muted); }
+.freq-lbl { font-family:var(--mono); font-size:0.64rem; color:var(--muted); text-align:center; margin-top:10px; }
+
+/* ── COIN ── */
+.coin-center { text-align:center; }
+.coin {
+  width:76px; height:76px; border-radius:50%;
+  margin:0 auto 10px; display:grid; place-items:center;
+  font-size:2rem; cursor:pointer; user-select:none; transition:transform 0.2s;
+}
+.coin.H { background:radial-gradient(circle at 38% 38%, #b8996a, #6a4e28); border:3px solid #8a6a3a; }
+.coin.T { background:radial-gradient(circle at 38% 38%, #888, #444); border:3px solid #666; }
+.coin:hover { transform:scale(1.07); }
+.coin.flipping { animation:coinFlip 0.5s ease; }
+@keyframes coinFlip {
+  0%  {transform:rotateY(0)scale(1)}
+  45% {transform:rotateY(90deg)scale(0.8)}
+  55% {transform:rotateY(90deg)scale(0.8)}
+  100%{transform:rotateY(0)scale(1)}
+}
+.coin-bars { display:flex; gap:14px; align-items:flex-end; height:42px; margin:10px 28px 0; }
+.c-bar { flex:1; border-radius:3px 3px 0 0; transition:height 0.4s; min-height:3px; position:relative; }
+.c-bar.H { background:rgba(196,180,154,0.3); border:1px solid rgba(196,180,154,0.45); }
+.c-bar.T { background:rgba(150,150,150,0.22); border:1px solid rgba(150,150,150,0.35); }
+.c-bar-lbl { position:absolute; bottom:-17px; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:0.6rem; color:var(--muted); white-space:nowrap; }
+
+/* ── URN ── */
+.urn-visual {
+  display:flex; flex-wrap:wrap; gap:6px; padding:10px;
+  background:rgba(0,0,0,0.2); border:1px solid var(--border);
+  border-radius:8px; min-height:50px; margin-bottom:10px;
+}
+.ball {
+  width:32px; height:32px; border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.58rem; font-family:var(--mono); font-weight:500;
+  user-select:none; transition:all 0.3s;
+}
+.ball.R { background:radial-gradient(circle at 35% 35%,#c05040,#5a1a10); border:1.5px solid #8a3020; color:#fff; }
+.ball.B { background:radial-gradient(circle at 35% 35%,#4080c0,#1a3060); border:1.5px solid #2a60a0; color:#fff; }
+.ball.V { background:radial-gradient(circle at 35% 35%,#50b060,#1a5030); border:1.5px solid #2a8040; color:#fff; }
+.ball.out { opacity:0.2; transform:scale(0.72); }
+.urn-prob-line { font-family:var(--mono); font-size:0.7rem; color:var(--muted); margin-bottom:8px; text-align:center; }
+.urn-prob-line span { color:var(--cream2); }
+.urn-log {
+  background:rgba(0,0,0,0.25); border:1px solid var(--border); border-radius:6px;
+  padding:8px 12px; font-family:var(--mono); font-size:0.68rem; color:var(--muted);
+  min-height:54px; max-height:88px; overflow-y:auto;
+}
+.urn-log p { margin-bottom:3px; }
+.urn-log .lR { color:#e09090; }
+.urn-log .lB { color:#80b4d8; }
+.urn-log .lV { color:#80d0a0; }
+
+/* ── POISSON ── */
+.lambda-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.lambda-lbl { font-family:var(--mono); font-size:0.7rem; color:var(--muted); }
+.lambda-num { font-family:var(--serif); font-size:1.5rem; font-weight:700; color:var(--cream); min-width:34px; text-align:center; }
+.lam-btn {
+  width:30px; height:30px; background:var(--surface2); border:1px solid var(--border2);
+  color:var(--cream2); font-size:1.1rem; font-family:var(--mono);
+  border-radius:6px; cursor:pointer; transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.lam-btn:hover { background:var(--surface3); border-color:var(--brown3); }
+.p-chart { display:flex; gap:3px; align-items:flex-end; height:68px; margin-bottom:4px; }
+.p-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.p-bar2 { width:100%; background:rgba(196,180,154,0.18); border:1px solid rgba(196,180,154,0.1); border-radius:2px 2px 0 0; transition:height .4s ease; min-height:3px; }
+.p-bar2.pk { background:rgba(196,180,154,0.5); border-color:var(--cream3); }
+.p-klbl { font-family:var(--mono); font-size:0.55rem; color:var(--muted); }
+.p-vlbl { font-family:var(--mono); font-size:0.52rem; color:var(--cream3); }
+.poisson-formula-box {
+  background:rgba(0,0,0,0.22); border-left:2px solid var(--brown3);
+  border-radius:0 7px 7px 0; padding:12px 14px; margin-bottom:12px; text-align:center;
+}
+.sim-result { font-family:var(--mono); font-size:0.68rem; color:var(--muted); text-align:center; margin-top:8px; min-height:18px; }
+.sim-result span { color:var(--cream2); }
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:99px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <button class="tab-btn active" onclick="switchTab('quiz',this)">Quiz</button>
+  <button class="tab-btn" onclick="switchTab('apps',this)">Aplicații Practice</button>
+</nav>
+
+<!-- ═══════════ QUIZ ═══════════ -->
+<div class="tab-pane active" id="tab-quiz">
+<div class="quiz-wrap">
+
+  <div class="quiz-header">
+    <h1>Quiz —<br><em>Probabilități</em></h1>
+    <div class="qdivider"></div>
+    <p>Quiz · 15 întrebări · feedback imediat</p>
+  </div>
+
+  <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="prog-lbl" id="progLbl">0 / 15 răspunse</div>
+
+  <div id="quizBox"></div>
+
+  <div class="score-panel" id="scorePanel">
+    <div class="score-big" id="scoreVal">—</div>
+    <div class="score-lbl" id="scoreLbl"></div>
+    <div class="score-msg" id="scoreMsg"></div>
+    <button class="restart-btn" onclick="restartQuiz()">↺ &nbsp;Încearcă din nou</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════ APPS ═══════════ -->
+<div class="tab-pane" id="tab-apps">
+<div class="apps-wrap">
+
+  <div class="apps-header">
+    <h1>Aplicații <em>Practice</em></h1>
+    <div class="qdivider"></div>
+    <p>Experimentează cu probabilitățile în timp real</p>
+  </div>
+
+  <!-- ── DICE ── -->
+  <div class="app-card">
+    <div class="app-tag">Spațiu de rezultate</div>
+    <div class="app-title">🎲 Aruncă Zarul</div>
+    <div class="app-sub">Observă cum frecvențele tind spre 1⁄6 pe măsură ce arunci mai mult</div>
+
+    <div class="inline-formula">
+      <div class="math-block">
+        <div class="math-eq">
+          <span>P(față) =</span>
+          <div class="frac"><div class="num">cazuri favorabile</div><div class="den">cazuri posibile</div></div>
+          <span>=</span>
+          <div class="frac"><div class="num">1</div><div class="den">6</div></div>
+          <span>≈ 0,167</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dice-center">
+      <div class="dice-face" id="diceFace" onclick="rollDice()">⚀</div>
+    </div>
+
+    <div class="dice-hist" id="diceHist"></div>
+    <div class="freq-lbl" id="diceFreqLbl">Apasă pentru a începe</div>
+
+    <button class="act-btn" onclick="rollDice()">Aruncă o dată</button>
+    <button class="act-btn ghost" onclick="rollMany(100)">× 100 aruncări rapide</button>
+
+    <div class="stat-row">
+      <div class="stat-badge">Față: <span id="diceVal">—</span></div>
+      <div class="stat-badge">Total: <span id="diceTot">0</span></div>
+    </div>
+  </div>
+
+  <!-- ── COIN ── -->
+  <div class="app-card">
+    <div class="app-tag">Eveniment independent</div>
+    <div class="app-title">🪙 Aruncă Moneda</div>
+    <div class="app-sub">Verifică empiric că P(cap) = P(pajură) = 1⁄2</div>
+
+    <div class="inline-formula">
+      <div class="math-block">
+        <div class="math-eq">
+          <span>P(Ā) = 1 − P(A) = 1 −</span>
+          <div class="frac"><div class="num">1</div><div class="den">2</div></div>
+          <span>=</span>
+          <div class="frac"><div class="num">1</div><div class="den">2</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="coin-center">
+      <div class="coin H" id="coin" onclick="flipCoin()">🪙</div>
+    </div>
+
+    <div class="coin-bars" id="coinBars">
+      <div class="c-bar H" style="height:3px;flex:1"><span class="c-bar-lbl">Cap (—)</span></div>
+      <div class="c-bar T" style="height:3px;flex:1"><span class="c-bar-lbl">Pajură (—)</span></div>
+    </div>
+    <div style="height:22px"></div>
+
+    <button class="act-btn" onclick="flipCoin()">Aruncă moneda</button>
+    <button class="act-btn ghost" onclick="flipMany(200)">× 200 aruncări rapide</button>
+
+    <div class="stat-row">
+      <div class="stat-badge">Cap: <span id="coinH">0</span></div>
+      <div class="stat-badge">Pajură: <span id="coinT">0</span></div>
+      <div class="stat-badge">Total: <span id="coinTot">0</span></div>
+    </div>
+  </div>
+
+  <!-- ── URN ── -->
+  <div class="app-card">
+    <div class="app-tag">Evenimente dependente</div>
+    <div class="app-title">🔵 Urnă cu Bile</div>
+    <div class="app-sub">Extragere fără repunere — P se schimbă după fiecare extragere!</div>
+
+    <div class="inline-formula">
+      <div class="math-block">
+        <div class="math-eq">
+          <span>P(A∩B) = P(A) · P(B|A)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="urn-visual" id="urnVisual"></div>
+    <div class="urn-prob-line" id="urnProb">P(roșie) = <span>4/10 = 0,40</span></div>
+
+    <div style="display:flex;gap:8px">
+      <button class="act-btn" id="extractBtn" onclick="extractBall()" style="flex:1">Extrage bilă</button>
+      <button class="act-btn ghost" onclick="resetUrn()" style="flex:0 0 46px;padding:0">↺</button>
+    </div>
+
+    <div class="urn-log" id="urnLog"><p style="color:var(--muted)">Nicio extragere încă…</p></div>
+  </div>
+
+  <!-- ── POISSON ── -->
+  <div class="app-card">
+    <div class="app-tag">Distribuția Poisson</div>
+    <div class="app-title">📊 Simulare Poisson</div>
+    <div class="app-sub">Modifică λ și observă cum se schimbă distribuția P(X = k)</div>
+
+    <div class="poisson-formula-box">
+      <div class="math-block">
+        <div class="math-eq">
+          <span>P(X = k) =</span>
+          <div class="frac">
+            <div class="num" style="display:flex;align-items:center;gap:3px">
+              <span>λ<sup>k</sup></span><span>· e<sup>−λ</sup></span>
+            </div>
+            <div class="den">k !</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lambda-row">
+      <div class="lambda-lbl">λ =</div>
+      <button class="lam-btn" onclick="changeLambda(-0.5)">−</button>
+      <div class="lambda-num" id="lambdaVal">2</div>
+      <button class="lam-btn" onclick="changeLambda(0.5)">+</button>
+    </div>
+
+    <div class="p-chart" id="poissonChart"></div>
+
+    <div class="stat-row" style="margin-top:12px">
+      <div class="stat-badge">E(X) = <span id="pMean">2</span></div>
+      <div class="stat-badge">D²(X) = <span id="pVar">2</span></div>
+      <div class="stat-badge">P(X=0) = <span id="pZero">—</span></div>
+    </div>
+
+    <button class="act-btn ghost" onclick="runPoissonSim()">▶ Simulează 1000 observații</button>
+    <div class="sim-result" id="simRes"></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── TAB ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════ QUIZ ══════════
+const QS=[
+  {cat:"Teoria probabilităților",q:"Care este intervalul în care se află întotdeauna P(A)?",hint:"Gândește-te la evenimentul imposibil și la cel sigur.",opts:["P(A) ∈ (−∞, +∞)","P(A) ∈ [0, 1]","P(A) ∈ [0, 100]","P(A) ∈ (0, 1)"],c:1,exp:"P(A) este mereu între 0 (imposibil) și 1 (sigur).",formula:'<div class="math-block"><div class="math-eq"><span>0 ≤ P(A) ≤ 1</span></div></div>'},
+  {cat:"Probabilitate clasică",q:"Se aruncă un zar echilibrat. Probabilitatea de a obține număr par?",opts:["1/6","1/3","1/2","2/3"],c:2,exp:"Pare: {2,4,6} → 3 din 6. P = 1/2.",formula:'<div class="math-block"><div class="math-eq"><span>P(par) =</span><div class="frac"><div class="num">3</div><div class="den">6</div></div><span>=</span><div class="frac"><div class="num">1</div><div class="den">2</div></div></div></div>'},
+  {cat:"Eveniment contrar",q:"Dacă P(A) = 0,3, cât este P(Ā)?",hint:"P(Ā) = 1 − P(A)",opts:["0,3","0,6","0,7","1,3"],c:2,exp:"P(Ā) = 1 − 0,3 = 0,7.",formula:'<div class="math-block"><div class="math-eq"><span>P(Ā) = 1 − 0,3 = 0,7</span></div></div>'},
+  {cat:"Spațiul de rezultate",q:"La aruncarea unui zar, câte elemente are Ω?",hint:"Ω = {1, 2, 3, 4, 5, 6}",opts:["5","6","7","12"],c:1,exp:"|Ω| = 6."},
+  {cat:"Tipuri de variabile",q:"Numărul de elevi dintr-o clasă este variabilă aleatoare...",opts:["Continuă","Discretă","Negativă","Continuă și negativă"],c:1,exp:"Valori întregi finite → variabilă discretă."},
+  {cat:"Legea de probabilitate",q:"P(X=1)=0,2 ; P(X=2)=0,5 ; P(X=3)=p. Cât este p?",opts:["0,1","0,2","0,3","0,5"],c:2,exp:"0,2 + 0,5 + p = 1 → p = 0,3.",formula:'<div class="math-block"><div class="math-eq"><span>∑ P(X=xᵢ) = 1</span></div></div>'},
+  {cat:"Media matematică",q:"E(X) pentru un zar echilibrat este:",opts:["3","3,5","4","21"],c:1,exp:"(1+2+⋯+6)/6 = 21/6 = 3,5.",formula:'<div class="math-block"><div class="math-eq"><span>E(X) =</span><div class="frac"><div class="num">21</div><div class="den">6</div></div><span>= 3,5</span></div></div>'},
+  {cat:"Media matematică",q:"P(X=0)=1/2 ; P(X=2)=1/4 ; P(X=4)=1/4. E(X)=?",opts:["1","1,5","2","3"],c:1,exp:"0·½ + 2·¼ + 4·¼ = 1,5.",formula:'<div class="math-block"><div class="math-eq"><span>E(X) = 0·</span><div class="frac"><div class="num">1</div><div class="den">2</div></div><span>+ 2·</span><div class="frac"><div class="num">1</div><div class="den">4</div></div><span>+ 4·</span><div class="frac"><div class="num">1</div><div class="den">4</div></div><span>= 1,5</span></div></div>'},
+  {cat:"Probabilitate condiționată",q:"P(A∩B)=0,12 și P(B)=0,4. Cât este P(A|B)?",opts:["0,048","0,3","0,52","0,4"],c:1,exp:"P(A|B) = 0,12 / 0,4 = 0,3.",formula:'<div class="math-block"><div class="math-eq"><span>P(A|B) =</span><div class="frac"><div class="num">P(A∩B)</div><div class="den">P(B)</div></div><span>=</span><div class="frac"><div class="num">0,12</div><div class="den">0,4</div></div><span>= 0,3</span></div></div>'},
+  {cat:"Probabilitate condiționată",q:"20 elevi fac sport, 12 joacă și fotbal. P(fotbal|sport) = ?",opts:["20%","40%","60%","80%"],c:2,exp:"P(F|S) = 12/20 = 0,6 = 60%.",formula:'<div class="math-block"><div class="math-eq"><span>P(F|S) =</span><div class="frac"><div class="num">12</div><div class="den">20</div></div><span>= 0,6 = 60%</span></div></div>'},
+  {cat:"Evenimente independente",q:"A, B independente; P(A)=1/2, P(B)=1/3. P(A∩B)=?",opts:["1/6","1/5","5/6","2/3"],c:0,exp:"(1/2)·(1/3) = 1/6.",formula:'<div class="math-block"><div class="math-eq"><div class="frac"><div class="num">1</div><div class="den">2</div></div><span>·</span><div class="frac"><div class="num">1</div><div class="den">3</div></div><span>=</span><div class="frac"><div class="num">1</div><div class="den">6</div></div></div></div>'},
+  {cat:"Evenimente dependente",q:"Urnă: 3 roșii, 2 albe; extragere fără repunere. P(ambele roșii)=?",hint:"Prima: 3/5 ; a doua (rămân 4 bile): 2/4",opts:["6/25","3/10","9/25","1/2"],c:1,exp:"(3/5)·(2/4) = 6/20 = 3/10.",formula:'<div class="math-block"><div class="math-eq"><div class="frac"><div class="num">3</div><div class="den">5</div></div><span>·</span><div class="frac"><div class="num">2</div><div class="den">4</div></div><span>=</span><div class="frac"><div class="num">3</div><div class="den">10</div></div></div></div>'},
+  {cat:"Reuniunea evenimentelor",q:"P(A)=0,4 ; P(B)=0,5 ; P(A∩B)=0,2. P(A∪B)=?",opts:["0,5","0,6","0,7","0,9"],c:2,exp:"0,4 + 0,5 − 0,2 = 0,7.",formula:'<div class="math-block"><div class="math-eq"><span>P(A∪B) = P(A)+P(B)−P(A∩B) = 0,7</span></div></div>'},
+  {cat:"Distribuția Poisson",q:"La Poisson cu λ=2, E(X) și D²(X) sunt:",opts:["E=1, D²=2","E=2, D²=4","E=2, D²=2","E=4, D²=2"],c:2,exp:"La Poisson: E(X) = λ și D²(X) = λ.",formula:'<div class="math-block"><div class="math-eq"><span>E(X) = D²(X) = λ = 2</span></div></div>'},
+  {cat:"Distribuția Poisson",q:"λ=3 erori/oră. P(X=0) — nicio eroare?",opts:["e⁻¹ ≈ 0,368","e⁻² ≈ 0,135","e⁻³ ≈ 0,050","e⁰ = 1"],c:2,exp:"P(X=0) = e⁻³ ≈ 0,050 ≈ 5%.",formula:'<div class="math-block"><div class="math-eq"><span>P(X=0) =</span><div class="frac"><div class="num">λ⁰ · e<sup>−λ</sup></div><div class="den">0!</div></div><span>= e<sup>−3</sup> ≈ 0,050</span></div></div>'}
+];
+
+let answered=0,score=0;
+
+function buildQuiz(){
+  const box=document.getElementById('quizBox');box.innerHTML='';
+  QS.forEach((q,i)=>{
+    const card=document.createElement('div');card.className='q-card';card.style.animationDelay=i*.025+'s';
+    const L=['A','B','C','D'];
+    card.innerHTML=`
+      <div class="q-cat">${q.cat}</div>
+      <div class="q-num">Întrebarea ${i+1} din ${QS.length}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.hint?`<div class="q-hint">💡 ${q.hint}</div>`:''}
+      ${q.formula?`<div class="q-formula">${q.formula}</div>`:''}
+      <div class="options">
+        ${q.opts.map((o,j)=>`
+          <button class="opt-btn" id="o${i}-${j}" onclick="pick(${i},${j})">
+            <span class="opt-letter">${L[j]}</span><span>${o}</span>
+          </button>`).join('')}
+      </div>
+      <div class="fb" id="fb${i}"></div>`;
+    box.appendChild(card);
+  });
+}
+
+function pick(qi,oi){
+  const q=QS[qi];
+  document.querySelectorAll(`[id^="o${qi}-"]`).forEach(b=>{b.disabled=true;b.classList.add('dead');});
+  const ch=document.getElementById(`o${qi}-${oi}`);
+  const cor=document.getElementById(`o${qi}-${q.c}`);
+  const fb=document.getElementById(`fb${qi}`);
+  ch.classList.remove('dead');cor.classList.remove('dead');
+  if(oi===q.c){ch.classList.add('correct');fb.className='fb show ok';fb.innerHTML=`<strong>✓ CORECT!</strong> ${q.exp}`;score++;}
+  else{ch.classList.add('wrong');cor.classList.add('correct');fb.className='fb show bad';fb.innerHTML=`<strong>✗ INCORECT.</strong> ${q.exp}`;}
+  answered++;
+  document.getElementById('progFill').style.width=(answered/QS.length*100)+'%';
+  document.getElementById('progLbl').textContent=`${answered} / ${QS.length} răspunse`;
+  if(answered===QS.length)setTimeout(showScore,900);
+}
+
+function showScore(){
+  document.getElementById('quizBox').style.display='none';
+  const sp=document.getElementById('scorePanel');sp.style.display='block';
+  const pct=Math.round(score/QS.length*100);
+  document.getElementById('scoreVal').textContent=`${score}/${QS.length}`;
+  document.getElementById('scoreLbl').textContent=`${pct}% corecte`;
+  const m=['Continuă să exersezi! Revizuiește prezentarea.','Bine! O recapitulare te va ajuta mult.','Foarte bine! Cunoști bine materia.','Excelent! Ești maestrul probabilităților 🏆'];
+  document.getElementById('scoreMsg').textContent=m[pct>=90?3:pct>=70?2:pct>=50?1:0];
+}
+
+function restartQuiz(){
+  answered=0;score=0;
+  document.getElementById('progFill').style.width='0%';
+  document.getElementById('progLbl').textContent='0 / 15 răspunse';
+  document.getElementById('scorePanel').style.display='none';
+  document.getElementById('quizBox').style.display='block';
+  buildQuiz();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+buildQuiz();
+
+// ══════════ DICE ══════════
+const FACES=['⚀','⚁','⚂','⚃','⚄','⚅'];
+const DC=[0,0,0,0,0,0];let DT=0;
+
+function buildDiceHist(){
+  const h=document.getElementById('diceHist');h.innerHTML='';
+  for(let i=0;i<6;i++){
+    const w=document.createElement('div');w.className='d-bar-wrap';
+    const b=document.createElement('div');b.className='d-bar';b.id='db'+i;b.style.height='3px';
+    const l=document.createElement('div');l.className='d-bar-lbl';l.textContent=i+1;
+    w.appendChild(b);w.appendChild(l);h.appendChild(w);
+  }
+}
+buildDiceHist();
+
+function rollDice(){
+  const f=document.getElementById('diceFace');
+  f.classList.remove('rolling');void f.offsetWidth;f.classList.add('rolling');
+  const v=Math.floor(Math.random()*6);DC[v]++;DT++;
+  setTimeout(()=>{f.textContent=FACES[v];updateDice(v);},300);
+}
+function rollMany(n){for(let i=0;i<n;i++){const v=Math.floor(Math.random()*6);DC[v]++;DT++;}updateDice(DC.indexOf(Math.max(...DC)));}
+function updateDice(last){
+  document.getElementById('diceVal').textContent=last+1;
+  document.getElementById('diceTot').textContent=DT;
+  document.getElementById('diceFace').textContent=FACES[last];
+  const max=Math.max(...DC,1);
+  document.getElementById('diceFreqLbl').textContent=DT>0?DC.map((c,i)=>`${i+1}: ${(c/DT*100).toFixed(1)}%`).join('  '):'Apasă pentru a începe';
+  for(let i=0;i<6;i++){
+    const b=document.getElementById('db'+i);
+    b.style.height=Math.max(3,DC[i]/max*48)+'px';
+    b.className='d-bar'+(DC[i]===Math.max(...DC)?' top':'');
+  }
+}
+
+// ══════════ COIN ══════════
+let cH=0,cT=0,cN=0;
+function flipCoin(){
+  const c=document.getElementById('coin');
+  c.classList.remove('flipping');void c.offsetWidth;c.classList.add('flipping');
+  const h=Math.random()<.5;if(h)cH++;else cT++;cN++;
+  setTimeout(()=>{c.className='coin '+(h?'H':'T');c.textContent=h?'🪙':'🔘';updateCoin();},360);
+}
+function flipMany(n){for(let i=0;i<n;i++){if(Math.random()<.5)cH++;else cT++;cN++;}updateCoin();}
+function updateCoin(){
+  document.getElementById('coinH').textContent=cH;
+  document.getElementById('coinT').textContent=cT;
+  document.getElementById('coinTot').textContent=cN;
+  const tot=cH+cT||1;
+  const bars=document.getElementById('coinBars');
+  bars.innerHTML=`
+    <div class="c-bar H" style="height:${Math.max(3,cH/tot*38)}px;flex:1"><span class="c-bar-lbl">Cap (${(cH/tot*100).toFixed(1)}%)</span></div>
+    <div class="c-bar T" style="height:${Math.max(3,cT/tot*38)}px;flex:1"><span class="c-bar-lbl">Pajură (${(cT/tot*100).toFixed(1)}%)</span></div>`;
+}
+
+// ══════════ URN ══════════
+let urnBalls=[],urnOut=[];
+function initUrn(){
+  urnBalls=[
+    {t:'R',l:'R1'},{t:'R',l:'R2'},{t:'R',l:'R3'},{t:'R',l:'R4'},
+    {t:'B',l:'A1'},{t:'B',l:'A2'},{t:'B',l:'A3'},
+    {t:'V',l:'V1'},{t:'V',l:'V2'},{t:'V',l:'V3'}
+  ];urnOut=[];
+  document.getElementById('urnLog').innerHTML='<p style="color:var(--muted)">Nicio extragere încă…</p>';
+  renderUrn();
+}
+function renderUrn(){
+  const vis=document.getElementById('urnVisual');vis.innerHTML='';
+  urnBalls.forEach((b,i)=>{
+    const d=document.createElement('div');d.className='ball '+b.t+(urnOut.includes(i)?' out':'');d.textContent=b.l;vis.appendChild(d);
+  });
+  const rem=urnBalls.filter((_,i)=>!urnOut.includes(i));
+  const r=rem.filter(b=>b.t==='R').length;
+  document.getElementById('extractBtn').disabled=rem.length===0;
+  document.getElementById('urnProb').innerHTML=rem.length>0
+    ?`P(roșie) = <span>${r}/${rem.length} = ${(r/rem.length).toFixed(2)}</span>`
+    :`<span>Urna este goală!</span>`;
+}
+function extractBall(){
+  const rem=urnBalls.map((_,i)=>i).filter(i=>!urnOut.includes(i));
+  if(!rem.length)return;
+  const idx=rem[Math.floor(Math.random()*rem.length)];urnOut.push(idx);
+  const b=urnBalls[idx];
+  const names={R:'roșie',B:'albastră',V:'verde'};
+  const cls={R:'lR',B:'lB',V:'lV'};
+  const rem2=urnBalls.filter((_,i)=>!urnOut.includes(i));
+  const r2=rem2.filter(x=>x.t==='R').length;
+  const nx=rem2.length>0?`→ P(roș. next)=${r2}/${rem2.length}=${(r2/rem2.length).toFixed(2)}`:'→ urnă goală';
+  const log=document.getElementById('urnLog');
+  if(log.firstChild?.textContent.includes('Nicio'))log.innerHTML='';
+  const p=document.createElement('p');p.className=cls[b.t];
+  p.textContent=`Extras: ${b.l} (${names[b.t]}) ${nx}`;log.appendChild(p);log.scrollTop=9999;
+  renderUrn();
+}
+function resetUrn(){initUrn();}
+initUrn();
+
+// ══════════ POISSON ══════════
+let LAM=2;
+function fact(n){let f=1;for(let i=2;i<=n;i++)f*=i;return f;}
+function pp(l,k){return Math.pow(l,k)*Math.exp(-l)/fact(k);}
+function renderPoisson(){
+  const kMax=Math.min(14,Math.ceil(LAM*3)+2);
+  const probs=[];
+  for(let k=0;k<=kMax;k++)probs.push({k,p:pp(LAM,k)});
+  const maxP=Math.max(...probs.map(x=>x.p));
+  const chart=document.getElementById('poissonChart');chart.innerHTML='';
+  probs.forEach(({k,p})=>{
+    const col=document.createElement('div');col.className='p-col';
+    const pv=document.createElement('div');pv.className='p-vlbl';pv.textContent=(p*100).toFixed(1)+'%';
+    const bar=document.createElement('div');bar.className='p-bar2'+(p===maxP?' pk':'');bar.style.height=Math.max(3,p/maxP*62)+'px';
+    const kl=document.createElement('div');kl.className='p-klbl';kl.textContent=k;
+    col.appendChild(pv);col.appendChild(bar);col.appendChild(kl);chart.appendChild(col);
+  });
+  document.getElementById('lambdaVal').textContent=LAM;
+  document.getElementById('pMean').textContent=LAM;
+  document.getElementById('pVar').textContent=LAM;
+  document.getElementById('pZero').textContent=Math.exp(-LAM).toFixed(4);
+}
+function changeLambda(d){LAM=Math.max(0.5,Math.min(12,Math.round((LAM+d)*2)/2));renderPoisson();}
+function runPoissonSim(){
+  const counts=Array(30).fill(0);
+  for(let i=0;i<1000;i++){
+    let k=0,L=Math.exp(-LAM),p2=Math.random();
+    while(p2>L){k++;L*=LAM/k;}counts[k]=(counts[k]||0)+1;
+  }
+  const avg=counts.reduce((s,c,k)=>s+k*c,0)/1000;
+  document.getElementById('simRes').innerHTML=`1000 obs. → medie empirică: <span>${avg.toFixed(3)}</span> (teoretic λ=<span>${LAM}</span>)`;
+}
+renderPoisson();
+</script>
+</body>
+</html>
